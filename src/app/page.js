@@ -16,40 +16,45 @@ export default function Home() {
   const [sortLabel, setSortLabel] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
-  const [nextPageToken, setNextPageToken] = useState(null); 
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [loading, setLoading] = useState(false); 
   const [error, setError] = useState(null);
 
-  // To do: add key to env
   async function fetchVideos(term, sort, pageToken = '') {
-    if (!term) return; // If no search term, exit the function
+    if (!term) return; // Exit of no search term
+
+    setLoading(true);
   
     try {
-      const maxResults = 2;
+      const maxResults = 6;
+      
       let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
         term
-      )}&order=${sort}&maxResults=${maxResults}&key=AIzaSyCrSqbzxSTiNWD-fIBkxOhVGuS3KyP7eJg`;
+      )}&order=${sort}&maxResults=${maxResults}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`;
   
       if (pageToken) {
         url += `&pageToken=${pageToken}`;
       }
-  
+      
+      // Get the response
       const response = await fetch(url);      
 
       // Check for HTTP errors
       if (!response.ok) {
-        // If we can parse the error as JSON, then we should do so to get more information about the issue.
         const errorResponse = await response.json();
         throw new Error(`API Error: ${errorResponse.error.message} (Code: ${errorResponse.error.code})`);
       }
 
+      // Parse the data as JSON
       const data = await response.json();
-  
+      
+      // If no search results
       if (data.items.length === 0) throw new Error('No search results found');
   
-      // Conditional to append or replace video list based on the presence of a page token
+      // Append or replace video list based on the page token
       if (pageToken) {
         setVideos(prevVideos => {
-          // Create a new map with IDs as the keys for quick lookup
+          // Create a new map with IDs as the keys
           const existingIds = new Map(prevVideos.map(video => [video.id.videoId, video]));
 
           // Filter out any new videos that already exist based on their ID
@@ -66,14 +71,16 @@ export default function Home() {
       setError(null);
     } catch (error) {
       setError(error.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  // Function to fetch videos with a new search
+  // Fetch videos with a new search
   const handleSearch = () => {
     setVideos([]);
-    setSelectedVideo(null); // Clear the selected video when a new search is made
-    setNextPageToken(null); // Clear the nextPageToken for a fresh search
+    setSelectedVideo(null); 
+    setNextPageToken(null); 
     fetchVideos(searchTerm, sort); // Fetch new videos and clear previous state
   }
 
@@ -82,7 +89,7 @@ export default function Home() {
     setDropdownOpen(!dropdownOpen);
   };
 
-  // Define your sort options with both value and label
+  // Sort options
   const sortOptions = [
     { value: 'relevance', label: 'Relevance' },
     { value: 'date', label: 'Date' },
@@ -96,11 +103,12 @@ export default function Home() {
     setDropdownOpen(false); // Close dropdown
   };
 
-  // Function to fetch videos when "Load More" is clicked
+  // Fetch videos when "Load More" is clicked
   const handleLoadMore = () => {
     fetchVideos(searchTerm, sort, nextPageToken);
   }
 
+  // Save video
   const saveVideo = (video) => {
     setSavedVideos((prevSavedVideos) => {
       // Check if the video is already saved
@@ -111,12 +119,13 @@ export default function Home() {
     });
   }
 
+  // Remove video from saved
   const removeFromSaved = (videoId) => {
     setSavedVideos(savedVideos.filter((video) => video.id.videoId !== videoId));
   };
   
   return (
-    <div className="container mx-auto p-4">
+    <div className="container max-w-[1280px] mx-auto p-4 mb-6">
       <SearchBar 
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -134,7 +143,7 @@ export default function Home() {
         setError={setError}  
       />
 
-      <div className={`flex ${selectedVideo ? 'flex-col lg:flex-row' : ''}`}>
+      <div className={`flex ${selectedVideo ? 'flex-col-reverse lg:flex-row' : ''}`}>
         <VideoList 
           videos={videos} 
           setSelectedVideo={setSelectedVideo} 
@@ -142,14 +151,18 @@ export default function Home() {
           selectedVideo={selectedVideo}
           handleLoadMore={handleLoadMore}
           nextPageToken={nextPageToken}
+          loading={loading}
         />
-
-        <MainVideo selectedVideo={selectedVideo} />        
+        
+        <MainVideo 
+          selectedVideo={selectedVideo} 
+        />        
       </div>
 
       <WatchLater
         savedVideos={savedVideos} 
         setSelectedVideo={setSelectedVideo} 
+        selectedVideo={selectedVideo}
         removeFromSaved={removeFromSaved} 
       />   
     </div>
