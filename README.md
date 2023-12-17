@@ -1,3 +1,7 @@
+## Project Overview
+
+A dynamic web application built using Next.js and Tailwind CSS, leveraging the YouTube API. It offers a user-friendly interface where users can search for YouTube videos. It displays a list of search results, allowing users to choose and play any video directly within the app. Additionally, it features a "Watch Later" functionality, enabling users to select and save videos for future viewing.
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
