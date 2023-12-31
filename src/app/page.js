@@ -21,7 +21,7 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   async function fetchVideos(term, sort, pageToken = '') {
-    if (!term) return; // Exit of no search term
+    if (!term) return; // Exit if no search term
 
     setLoading(true);
   
